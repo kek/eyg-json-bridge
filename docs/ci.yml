@@ -3,7 +3,7 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  runtime:
+  bridge:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

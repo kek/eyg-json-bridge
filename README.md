@@ -1,22 +1,32 @@
-# eyg-runtime
+# eyg-json-bridge
 
-Host-neutral [EYG](https://eyg.run) evaluation with typed effects and retained
-continuations. The library uses upstream EYG packages for parsing, typechecking
-and evaluation, with versions pinned in `manifest.toml`. Licensed Apache-2.0.
+A bounded JSON bridge to upstream [EYG](https://eyg.run/) evaluation and
+host-defined effects. This is an embedding/transport package, not another EYG
+interpreter or a standard effect library. Licensed Apache-2.0.
 
-## Boundaries
+## Scope
 
-- **Gleam core:** checked execution, structural effect contracts, continuations,
-  JSON-compatible value encoding.
-- **Node adapter:** bounded NDJSON protocol version 1 and literal input encoding.
-- **Hosts:** effect grants, handlers, credentials, approvals, wall-clock deadlines,
-  process ownership, cancellation, receipts and domain recovery.
+- Compose the upstream parser, typechecker and interpreter, pinned in
+  `manifest.toml`.
+- Translate a deliberately limited JSON contract description into EYG types.
+- Expose `Done`, `Failed` or a typed effect request with an opaque, process-local
+  continuation; decode JSON replies before resuming the upstream interpreter.
+- Provide a bounded Node NDJSON adapter and literal input encoding.
 
-Pi filesystem/inspection/proposal policies and Factorio gameplay operations are
-not part of this repository. Selecting a contract does not authorize a resource.
-No automatic mutation retries, ambient EYG I/O, source imports or dynamic package
-loading are provided. The worker has the user's OS permissions: it is **not a
-hardened hostile-code sandbox**.
+Upstream EYG owns language semantics, evaluation and continuations.
+[`touch_grass`](https://github.com/CrowdHailer/eyg-lang/tree/main/packages/touch_grass)
+owns common effect interfaces, types and codecs. Hosts own concrete handlers,
+grants, credentials, approvals, deadlines, cancellation, receipts and recovery.
+This package neither replaces those interfaces nor implements those policies.
+
+Use the bridge when you need a JSON/process boundary. For native EYG values,
+binaries, arbitrary tags, closures or custom type contexts, use upstream packages
+and `touch_grass` directly. There is no public low-level engine wrapper here.
+See [consumer migration guidance](docs/MIGRATION.md) for Pi and Factorio.
+
+No source imports, dynamic package loading or ambient EYG I/O are enabled.
+Selecting a contract does not authorize a resource. The Node worker has the
+user's OS permissions: it is **not a hardened hostile-code sandbox**.
 
 ## Install the Node artifact
 
@@ -25,8 +35,8 @@ source; installing/running them requires neither Gleam nor install scripts.
 There is no npm-registry publication.
 
 ```sh
-npm install --ignore-scripts https://github.com/kek/eyg-runtime/releases/download/v0.1.1/kek-eyg-runtime-0.1.1.tgz
-export EYG_WORKER="$PWD/node_modules/@kek/eyg-runtime/node/worker.mjs"
+npm install --ignore-scripts https://github.com/kek/eyg-json-bridge/releases/download/v0.2.0/kek-eyg-json-bridge-0.2.0.tgz
+export EYG_WORKER="$PWD/node_modules/@kek/eyg-json-bridge/node/worker.mjs"
 node --max-old-space-size=128 "$EYG_WORKER"
 ```
 
@@ -36,61 +46,52 @@ verify the release's SHA256SUMS. Treat release artifacts as immutable; correctio
 get a new version. The package has no runtime npm dependencies.
 
 Public Node exports:
-- `@kek/eyg-runtime/worker`: executable worker entry point (starts reading stdin).
-- `@kek/eyg-runtime/input`: `literal(value)` and `program(code, inputs)`.
-- `@kek/eyg-runtime/runtime`: compiled structural start/resume accessors.
+- `@kek/eyg-json-bridge/worker`: executable entry point (starts reading stdin).
+- `@kek/eyg-json-bridge/input`: `literal(value)` and `program(code, inputs)`.
+- `@kek/eyg-json-bridge/bridge`: compiled structural start/resume accessors.
 
 Use these exports or the documented worker path, not generated module paths.
-See [PROTOCOL.md](PROTOCOL.md) for the wire contract and limits.
+See [PROTOCOL.md](PROTOCOL.md) for wire protocol v1, unchanged from v0.1.1.
 
-## Gleam embedding
+## Gleam embedding and BEAM adapters
 
 Add a pinned source checkout or the source included in the Node package as a
 Gleam path dependency:
 
 ```toml
 [dependencies]
-eyg_runtime = { path = "node_modules/@kek/eyg-runtime" }
+eyg_json_bridge = { path = "node_modules/@kek/eyg-json-bridge" }
 ```
 
-`eyg_runtime.start(source, contracts_json, max_effects)` returns a `Step`:
+`eyg_json_bridge.start(source, contracts_json, max_effects)` returns a `Step`:
 `Done(value_json)`, `Failed(reason)`, or
 `Effect(name, argument_json, continuation)`.
 `resume(continuation, successful, response)` accepts typed JSON on success or
 plain error text on failure. Host errors resume as EYG `Result(_, String)`.
 A malformed typed response fails evaluation. Accessors are available for JS
-embedding. Continuations are native process-local values, not serializable
-checkpoints or durable jobs.
+embedding. Continuations are opaque native process-local values, not
+serializable checkpoints or durable jobs.
 
-The structural core validates contract names, schema depth/count/field bounds,
-exact records and safe reply integers on both targets. Transport/frame limits,
-source/input acquisition and deadlines belong to adapters.
+The bridge validates contract names, schema depth/count/field bounds, exact
+records, safe reply integers and effect count on both JavaScript and Erlang.
+Transport/frame limits, final-value byte limits, input acquisition, memory limits
+and deadlines belong to adapters; the Node adapter supplies the documented byte
+limits. A native BEAM adapter can use the same structural API without Node, or
+use upstream EYG directly for richer types. A BEAM transport is not shipped yet.
 
-`eyg_runtime/engine` is a lower-level trusted-host interface for richer EYG types
-(such as Pi's binary JSON decoding and unit-returning logging). It centralizes
-parse/check/execute and native resumption under a host-supplied type context.
-It does not implement the structural protocol's validation or budgets; such
-adapters must enforce their own. Pi's effect-handling loops remain in Pi.
+## Integer portability
 
-## Erlang target and integer semantics
+Upstream EYG uses target-native integers. JavaScript rejects out-of-safe-range
+integer literals and checked arithmetic; Erlang permits arbitrary-precision
+intermediate integers. JSON output and structural replies are restricted to
+±(2^53−1) on both targets. An Erlang program can therefore convert a large
+intermediate integer to a string when the JS program would fail. This bridge
+does not redefine upstream arithmetic or promise equivalence outside the
+safe-integer domain.
 
-The core builds for JavaScript **and Erlang**, with cross-target smoke tests.
-A production BEAM host adapter is deferred; the Node worker is currently the
-supported transport for both Pi-related tooling and Factorio Control.
+## Build and verify
 
-Upstream EYG intentionally uses target-native integers. JavaScript rejects
-out-of-safe-range integer literals and checked arithmetic; Erlang permits
-arbitrary-precision intermediate integers. JSON output and structural replies
-are restricted to ±(2^53−1) on both targets. Consequently whole-program semantics
-are not identical outside the safe-integer domain: an Erlang program can convert
-a large intermediate integer to a string when the JS program would fail.
-Do not claim cross-target numerical equivalence merely from bounded output.
-No upstream integer redesign is included in this extraction.
-
-## Build and verify independently
-
-Build tools: Gleam 1.19.2, Node 24+, Erlang/OTP 29.1.2 and Rebar3 3.28.0
-for the Erlang check. Run:
+Build tools: Gleam 1.19.2, Node 24+, Erlang/OTP 29.1.2 and Rebar3 3.28.0.
 
 ```sh
 npm ci --ignore-scripts
@@ -100,19 +101,14 @@ npm test
 npm run test:core
 npm run test:package
 npm pack
-sha256sum kek-eyg-runtime-0.1.1.tgz > SHA256SUMS
+sha256sum kek-eyg-json-bridge-0.2.0.tgz > SHA256SUMS
 ```
 
 `test:package` installs the packed artifact into a temporary unrelated directory
-with install hooks disabled, then executes the worker and input export.
+with install hooks disabled, then exercises its public exports and worker.
 The inactive [CI template](docs/ci.yml) runs both targets and uploads the tested
-Node package plus its checksum when installed as `.github/workflows/test.yml`.
-Activation requires GitHub credentials with workflow permission; the initial
-publication credential lacks that scope. The same checks were run locally.
-Generated dependency licenses/provenance are included by the prepack step.
-Only release packaging needs a compiler; normal artifact installation does not.
+Node package plus checksum when installed as `.github/workflows/test.yml`.
+Activation requires GitHub workflow permission. Generated dependency licenses
+and provenance are included by the prepack step.
 
-The original Node v1 protocol is preserved. Pi's legacy snapshot and duplex-v8
-protocols remain in the Pi integration; they are not supported by this
-generic worker. Factorio retains its Elixir Port transport and application
-handlers. Neither consumer needs the other's checkout layout.
+See [CHANGELOG.md](CHANGELOG.md) for the v0.2.0 breaking package/API rename.

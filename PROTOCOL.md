@@ -1,4 +1,8 @@
-# Node worker protocol v1
+# eyg-json-bridge: Node worker protocol v1
+
+Package v0.2.0 retains the v0.1.1 wire protocol unchanged. These JSON contracts
+are transport-specific; they are not the upstream `touch_grass` interface format.
+See [consumer migration guidance](docs/MIGRATION.md) for native interfaces.
 
 UTF-8 NDJSON on stdin/stdout. Stdout is protocol-only. One evaluation per worker.
 The host starts it with a stripped environment and an independent deadline.
@@ -81,5 +85,6 @@ receipts outside the evaluator and perform domain recovery in the consumer.
 Killing the evaluator cannot roll back or reliably stop external operations.
 Never automatically retry an uncertain mutation.
 
-The low-level Gleam engine is not this protocol: it allows trusted adapters to
-define richer type contexts and therefore requires adapter-owned validation.
+Native embedding with upstream EYG and `touch_grass` is outside this protocol.
+Such hosts define their own type contexts, codecs and validation. This package
+exposes only the structural JSON bridge, not a low-level engine API.
