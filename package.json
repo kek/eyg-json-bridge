@@ -1,0 +1,36 @@
+{
+  "name": "@kek/eyg-runtime",
+  "version": "0.1.1",
+  "description": "Host-neutral EYG evaluation with typed effects and a bounded Node worker",
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kek/eyg-runtime.git"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./worker": "./node/worker.mjs",
+    "./input": "./node/input.mjs",
+    "./runtime": "./dist/eyg_runtime/eyg_runtime.mjs"
+  },
+  "files": [
+    "node/",
+    "src/",
+    "gleam.toml",
+    "manifest.toml",
+    "dist/",
+    "LICENSE",
+    "NOTICE",
+    "PROTOCOL.md"
+  ],
+  "scripts": {
+    "build": "gleam build --target javascript && node scripts/package-runtime.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:core": "gleam run --target javascript --module portability_test && gleam run --target erlang --module portability_test",
+    "prepack": "npm run build",
+    "test:package": "node scripts/test-package.mjs"
+  }
+}
