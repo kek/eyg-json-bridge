@@ -1,8 +1,7 @@
 eyg-runtime
 
-This project embeds lockfile-pinned upstream EYG packages by Peter Saxton
-(CrowdHailer/eyg-lang), licensed Apache-2.0. It is an integration library,
-not a replacement implementation of the EYG language.
+This project uses upstream EYG packages by Peter Saxton (CrowdHailer/eyg-lang),
+licensed Apache-2.0. Dependency versions are pinned in manifest.toml.
 
 Built distributions include generated code from dependencies. Their license
 and provenance files are included alongside each generated dependency.

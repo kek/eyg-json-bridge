@@ -1,8 +1,8 @@
 # eyg-runtime
 
 Host-neutral [EYG](https://eyg.run) evaluation with typed effects and retained
-continuations. Apache-2.0; upstream EYG parsing, inference and interpretation remain
-lockfile-pinned dependencies, not a fork.
+continuations. The library uses upstream EYG packages for parsing, typechecking
+and evaluation, with versions pinned in `manifest.toml`. Licensed Apache-2.0.
 
 ## Boundaries
 
