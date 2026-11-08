@@ -1,4 +1,4 @@
-import eyg_runtime as e
+import eyg_json_bridge as e
 import gleam/io
 
 const contracts =

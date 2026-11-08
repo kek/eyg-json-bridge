@@ -1,11 +1,13 @@
-/// Host-defined, fixed structural effect contracts. No Pi or domain handlers.
+/// Bounded structural JSON bridge to upstream EYG. Effect implementations,
+/// authorization and process lifetime belong to the embedding host.
 import eyg/analysis/inference/levels_j/contextual as infer
 import eyg/analysis/type_/isomorphic as t
 import eyg/interpreter/break
+import eyg/interpreter/expression as interpreter
 import eyg/interpreter/state
 import eyg/interpreter/value as v
-import eyg_runtime/engine
-import eyg_runtime/json as eyg_json
+import eyg/parser
+import eyg_json_bridge/json as eyg_json
 import gleam/dict
 import gleam/dynamic/decode
 import gleam/json
@@ -13,7 +15,7 @@ import gleam/list
 import gleam/result
 import gleam/string
 
-pub type Shape {
+type Shape {
   Text
   Integer
   Boolean
@@ -21,11 +23,11 @@ pub type Shape {
   Fields(List(#(String, Shape)))
 }
 
-pub type Contract {
+type Contract {
   Contract(argument: Shape, reply: Shape)
 }
 
-pub type Continuation {
+pub opaque type Continuation {
   Continuation(
     reply: Shape,
     contracts: dict.Dict(String, Contract),
@@ -194,11 +196,27 @@ fn start_contracts(source, contracts, max_effects) {
             t.result(shape_type(reply), t.String),
           )
         })
-      case engine.start(source, context) {
+      case start_checked(source, context) {
         Error(reason) -> Failed(reason)
         Ok(next) -> drive(next, contracts, max_effects)
       }
     }
+  }
+}
+
+// Private composition of upstream APIs, not an alternative embedding engine.
+fn start_checked(source, context) {
+  case parser.all_from_string(source) {
+    Error(reason) -> Error("parse: " <> parser.format_error(reason, source))
+    Ok(ast) ->
+      case infer.check(context, ast) {
+        infer.Lookup(_, _) -> Error("imports/references denied")
+        infer.Done(analysis) ->
+          case infer.all_errors(analysis) {
+            [] -> Ok(interpreter.execute(ast, []))
+            _ -> Error("type check failed (invalid type or unapproved effects)")
+          }
+      }
   }
 }
 
@@ -259,7 +277,8 @@ pub fn resume(
   }
   case value {
     Error(reason) -> Failed(reason)
-    Ok(value) -> drive(engine.resume(value, env, stack), contracts, remaining)
+    Ok(value) ->
+      drive(interpreter.resume(value, env, stack), contracts, remaining)
   }
 }
 

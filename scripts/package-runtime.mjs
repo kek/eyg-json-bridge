@@ -19,7 +19,19 @@ async function copyModules(from, to) {
     }
   }
 }
-await copyModules(generated, dist);
+// A renamed checkout may retain the previous project's generated directory.
+// Copy only the current project and resolved dependencies, never stale projects.
+const project = (await readFile(new URL('../gleam.toml', import.meta.url), 'utf8'))
+  .match(/^name\s*=\s*"([^"]+)"/m)?.[1];
+if (!project) throw new Error('Missing Gleam project name');
+await copyFile(join(generated, 'prelude.mjs'), join(dist, 'prelude.mjs'));
+const allowed = new Set([project, ...(await readdir(packages))]);
+for (const entry of await readdir(generated, { withFileTypes: true })) {
+  if (!entry.isDirectory() || !allowed.has(entry.name)) continue;
+  const destination = join(dist, entry.name);
+  await mkdir(destination, { recursive: true });
+  await copyModules(join(generated, entry.name), destination);
+}
 const rows = [];
 for (const entry of (await readdir(packages, { withFileTypes: true })).sort((a,b) => a.name.localeCompare(b.name))) {
   if (!entry.isDirectory()) continue;

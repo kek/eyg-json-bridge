@@ -1,9 +1,9 @@
-name = "eyg_runtime"
-version = "0.1.1"
+name = "eyg_json_bridge"
+version = "0.2.0"
 target = "javascript"
-description = "Host-neutral checked EYG evaluation and typed effect continuations"
+description = "Bounded JSON bridge to upstream EYG evaluation and host-defined effects"
 licences = ["Apache-2.0"]
-repository = { type = "github", user = "kek", repo = "eyg-runtime" }
+repository = { type = "github", user = "kek", repo = "eyg-json-bridge" }
 
 [dependencies]
 gleam_stdlib = "1.0.5"

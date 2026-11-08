@@ -1,5 +1,5 @@
 // Pi-independent NDJSON adapter. Hosts own contracts, grants and deadlines.
-import * as runtime from '../dist/eyg_runtime/eyg_runtime.mjs';
+import * as bridge from '../dist/eyg_json_bridge/eyg_json_bridge.mjs';
 import { program } from './input.mjs';
 
 const VERSION = 1;
@@ -86,10 +86,10 @@ try {
     validateShape(contract.argument);
     validateShape(contract.result);
   }
-  let step = runtime.start(program(code, inputs), JSON.stringify(contracts), max_effects);
+  let step = bridge.start(program(code, inputs), JSON.stringify(contracts), max_effects);
   let id = 0;
-  while (runtime.kind(step) === 'effect') {
-    const effect = runtime.effect(step), argument = JSON.parse(runtime.argument(step));
+  while (bridge.kind(step) === 'effect') {
+    const effect = bridge.effect(step), argument = JSON.parse(bridge.argument(step));
     check(Object.hasOwn(contracts, effect), 'Unapproved effect');
     validateValue(contracts[effect].argument, argument);
     send({ type: 'effect-request', id: ++id, effect, argument });
@@ -99,17 +99,17 @@ try {
     check(reply.type === 'effect-response' && reply.id === id && typeof reply.ok === 'boolean', 'Invalid pending effect response');
     if (reply.ok) {
       validateValue(contracts[effect].result, reply.value);
-      step = runtime.resume(runtime.continuation(step), true, JSON.stringify(reply.value));
+      step = bridge.resume(bridge.continuation(step), true, JSON.stringify(reply.value));
     } else {
       check(typeof reply.error === 'string' && Buffer.byteLength(reply.error) <= 4000, 'Invalid effect error');
-      step = runtime.resume(runtime.continuation(step), false, reply.error);
+      step = bridge.resume(bridge.continuation(step), false, reply.error);
     }
   }
-  if (runtime.kind(step) === 'done') {
-    const value = JSON.parse(runtime.value(step));
+  if (bridge.kind(step) === 'done') {
+    const value = JSON.parse(bridge.value(step));
     check(Buffer.byteLength(JSON.stringify(value)) <= 12_000, 'Result exceeds 12 KB');
     send({ type: 'result', ok: true, value });
-  } else send({ type: 'result', ok: false, error: runtime.error(step).slice(0, 500) });
+  } else send({ type: 'result', ok: false, error: bridge.error(step).slice(0, 500) });
 } catch (error) {
   try { send({ type: 'error', error: String(error.message).slice(0, 500) }); } catch { /* exhausted transport */ }
   process.exitCode = 1;

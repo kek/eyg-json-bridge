@@ -1,4 +1,4 @@
-eyg-runtime
+eyg-json-bridge
 
 This project uses upstream EYG packages by Peter Saxton (CrowdHailer/eyg-lang),
 licensed Apache-2.0. Dependency versions are pinned in manifest.toml.

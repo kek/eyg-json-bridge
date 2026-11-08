@@ -1,12 +1,12 @@
 {
-  "name": "@kek/eyg-runtime",
-  "version": "0.1.1",
-  "description": "Host-neutral EYG evaluation with typed effects and a bounded Node worker",
+  "name": "@kek/eyg-json-bridge",
+  "version": "0.2.0",
+  "description": "Bounded JSON bridge to upstream EYG evaluation and host-defined effects",
   "type": "module",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kek/eyg-runtime.git"
+    "url": "https://github.com/kek/eyg-json-bridge.git"
   },
   "engines": {
     "node": ">=24"
@@ -14,7 +14,7 @@
   "exports": {
     "./worker": "./node/worker.mjs",
     "./input": "./node/input.mjs",
-    "./runtime": "./dist/eyg_runtime/eyg_runtime.mjs"
+    "./bridge": "./dist/eyg_json_bridge/eyg_json_bridge.mjs"
   },
   "files": [
     "node/",
@@ -24,7 +24,9 @@
     "dist/",
     "LICENSE",
     "NOTICE",
-    "PROTOCOL.md"
+    "PROTOCOL.md",
+    "CHANGELOG.md",
+    "docs/MIGRATION.md"
   ],
   "scripts": {
     "build": "gleam build --target javascript && node scripts/package-runtime.mjs",
