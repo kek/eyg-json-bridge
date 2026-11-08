@@ -1,6 +1,6 @@
 {
   "name": "@kek/eyg-json-bridge",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Bounded JSON bridge to upstream EYG evaluation and host-defined effects",
   "type": "module",
   "license": "Apache-2.0",
@@ -26,11 +26,13 @@
     "NOTICE",
     "PROTOCOL.md",
     "CHANGELOG.md",
-    "docs/MIGRATION.md"
+    "docs/MIGRATION.md",
+    "docs/BEAM.md"
   ],
   "scripts": {
     "build": "gleam build --target javascript && node scripts/package-runtime.mjs",
     "test": "node --test test/*.test.mjs",
+    "test:beam": "sh scripts/test-beam.sh",
     "test:core": "gleam run --target javascript --module portability_test && gleam run --target erlang --module portability_test",
     "prepack": "npm run build",
     "test:package": "node scripts/test-package.mjs"

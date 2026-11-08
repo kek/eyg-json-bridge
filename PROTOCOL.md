@@ -1,8 +1,10 @@
 # eyg-json-bridge: Node worker protocol v1
 
-Package v0.2.0 retains the v0.1.1 wire protocol unchanged. These JSON contracts
-are transport-specific; they are not the upstream `touch_grass` interface format.
+Packages v0.2.0 and v0.3.0 retain the v0.1.1 wire protocol unchanged. These JSON
+contracts are transport-specific; they are not the upstream `touch_grass` interface format.
 See [consumer migration guidance](docs/MIGRATION.md) for native interfaces.
+The [BEAM process adapter](docs/BEAM.md) uses the same structural contracts and
+JSON values, but native messages rather than these NDJSON frames.
 
 UTF-8 NDJSON on stdin/stdout. Stdout is protocol-only. One evaluation per worker.
 The host starts it with a stripped environment and an independent deadline.
@@ -76,8 +78,9 @@ JSON replies carry plain JSON values, never source text to evaluate.
 The worker checks declared effects and shapes; the host must independently
 check grants and resource-specific arguments **before backend mutation**.
 The host owns wall-clock deadlines, process termination, parent-death cleanup
-and environment stripping. No worker timer can interrupt infinite pure
-computation. No cancellation frame exists.
+and environment stripping. No in-process Node timer can interrupt infinite pure
+computation. No NDJSON cancellation frame exists. The BEAM adapter uses a separate
+guardian process to enforce its deadline and cancellation.
 
 If an external mutation may have happened but lacks confirmation, terminate
 without resuming with an ordinary `Error`. Keep submission/acceptance/terminal

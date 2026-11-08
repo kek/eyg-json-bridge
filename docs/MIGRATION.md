@@ -1,5 +1,9 @@
 # Consumer migration: eyg-runtime 0.1.1 → eyg-json-bridge 0.2.0
 
+The rename-only instructions below retain the v0.2.0 URLs. New integrations can
+use v0.3.0 from the [README](../README.md); its Node protocol is unchanged.
+For the new native BEAM adapter, follow [BEAM.md](BEAM.md).
+
 This release narrows the package to a bounded structural JSON bridge. It does not
 change EYG language semantics, add standard effects or migrate consumer code
 automatically. The upstream dependency versions remain pinned as before.
@@ -162,16 +166,20 @@ interface. There is no automatic `touch_grass` ↔ JSON schema converter here.
   model game actions as generic filesystem/network effects.
 - Preserve host deadlines, port cleanup and uncertain-operation handling.
 
-### Upcoming native BEAM adapter
+### Native BEAM adapter (available in v0.3.0)
 
-- For the same JSON contracts, embed `eyg_json_bridge.start/resume` on Erlang and
-  retain each continuation in the evaluator process. Replace the Node transport,
-  not the domain handler contract. Reimplement adapter-owned acquisition/byte
-  limits and lifecycle controls; a Gleam call alone supplies no worker deadline.
+See [BEAM.md](BEAM.md) for the native Erlang/Elixir API and Factorio rollout.
+
+- For the same JSON contracts, use `eyg_json_bridge_beam.start/4` with code,
+  input JSON, contract JSON and options. It safely encodes the input binding,
+  retains continuations in a separate evaluator, enforces deadlines in a
+  guardian, monitors owner death and checks native reply/output budgets.
+  `start/3` also accepts already prepared EYG source. Replace the Node transport,
+  not the domain handler contract.
 - If adopting richer `touch_grass` interfaces, use upstream EYG directly instead.
   Select upstream common effects individually; keep game effects custom.
-- Keep pure evaluation in a separately monitored/killable process, with deadlines
-  enforced externally. Terminating that process does not roll back game actions.
+- The adapter supplies the monitored/killable evaluator and external deadline.
+  Terminating that process does not roll back game actions.
 - Run old/new adapter fixtures for game observations, successful actions,
   catchable operation errors, denied actions, wrong reply types, effect budgets,
   disconnect/death and uncertain submissions. Test the documented wide-integer

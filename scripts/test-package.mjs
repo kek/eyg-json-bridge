@@ -34,9 +34,11 @@ await assert.rejects(import('@kek/eyg-json-bridge/runtime'), {code: 'ERR_PACKAGE
   const root = resolve(dir, 'node_modules/@kek/eyg-json-bridge');
   const manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
   assert.equal(manifest.name, '@kek/eyg-json-bridge');
-  assert.equal(manifest.version, '0.2.0');
+  assert.equal(manifest.version, '0.3.0');
   assert.deepEqual(Object.keys(manifest.exports).sort(), ['./bridge', './input', './worker']);
   await access(join(root, 'docs/MIGRATION.md'));
+  await access(join(root, 'docs/BEAM.md'));
+  await access(join(root, 'src/eyg_json_bridge_beam.erl'));
   await access(join(root, 'CHANGELOG.md'));
   await assert.rejects(access(join(root, 'dist/eyg_runtime')));
   await assert.rejects(access(join(root, 'dist/eyg_json_bridge/eyg_json_bridge/engine.mjs')));

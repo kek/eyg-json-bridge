@@ -12,6 +12,8 @@ interpreter or a standard effect library. Licensed Apache-2.0.
 - Expose `Done`, `Failed` or a typed effect request with an opaque, process-local
   continuation; decode JSON replies before resuming the upstream interpreter.
 - Provide a bounded Node NDJSON adapter and literal input encoding.
+- Provide a native BEAM process adapter with owner monitoring, deadlines,
+  cancellation and per-evaluator heap limits.
 
 Upstream EYG owns language semantics, evaluation and continuations.
 [`touch_grass`](https://github.com/CrowdHailer/eyg-lang/tree/main/packages/touch_grass)
@@ -35,7 +37,7 @@ source; installing/running them requires neither Gleam nor install scripts.
 There is no npm-registry publication.
 
 ```sh
-npm install --ignore-scripts https://github.com/kek/eyg-json-bridge/releases/download/v0.2.0/kek-eyg-json-bridge-0.2.0.tgz
+npm install --ignore-scripts https://github.com/kek/eyg-json-bridge/releases/download/v0.3.0/kek-eyg-json-bridge-0.3.0.tgz
 export EYG_WORKER="$PWD/node_modules/@kek/eyg-json-bridge/node/worker.mjs"
 node --max-old-space-size=128 "$EYG_WORKER"
 ```
@@ -76,8 +78,11 @@ The bridge validates contract names, schema depth/count/field bounds, exact
 records, safe reply integers and effect count on both JavaScript and Erlang.
 Transport/frame limits, final-value byte limits, input acquisition, memory limits
 and deadlines belong to adapters; the Node adapter supplies the documented byte
-limits. A native BEAM adapter can use the same structural API without Node, or
-use upstream EYG directly for richer types. A BEAM transport is not shipped yet.
+limits. The native `eyg_json_bridge_beam` adapter runs the same structural API
+in a separate evaluator process, with an independent guardian enforcing lifetime
+and payload limits. It uses native BEAM messages, not NDJSON or an Elixir Port.
+See [docs/BEAM.md](docs/BEAM.md) for Erlang/Elixir usage and source deployment.
+For richer types, use upstream EYG directly.
 
 ## Integer portability
 
@@ -99,9 +104,10 @@ gleam format --check src test
 npm run build
 npm test
 npm run test:core
+npm run test:beam
 npm run test:package
 npm pack
-sha256sum kek-eyg-json-bridge-0.2.0.tgz > SHA256SUMS
+sha256sum kek-eyg-json-bridge-0.3.0.tgz > SHA256SUMS
 ```
 
 `test:package` installs the packed artifact into a temporary unrelated directory
@@ -111,4 +117,4 @@ Node package plus checksum when installed as `.github/workflows/test.yml`.
 Activation requires GitHub workflow permission. Generated dependency licenses
 and provenance are included by the prepack step.
 
-See [CHANGELOG.md](CHANGELOG.md) for the v0.2.0 breaking package/API rename.
+See [CHANGELOG.md](CHANGELOG.md) for v0.3.0 and the v0.2.0 package/API rename.

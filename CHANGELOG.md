@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+- Add native Erlang/Elixir adapter `eyg_json_bridge_beam`: a monitored guardian
+  owns a linked evaluator process and run-specific asynchronous effect requests.
+- Enforce deadlines during pure evaluation, owner-death cleanup, cancellation,
+  pending reply IDs, payload/output budgets and per-evaluator OTP heap limits.
+- Add safe native JSON input encoding with `start/4`; `start/3` accepts already
+  prepared source. Neither path requires Node or a Port.
+- Keep continuations in the evaluator and distinguish typed application errors
+  from terminal adapter failures. Terminal events follow evaluator shutdown.
+- Document native deployment, options, limits and Factorio's Port-to-BEAM rollout
+  in [docs/BEAM.md](docs/BEAM.md).
+- Add native lifecycle/contract tests. Node wire protocol v1, structural core and
+  pinned upstream package versions are unchanged.
+
 ## 0.2.0
 
 Breaking package/API rename and scope reduction:

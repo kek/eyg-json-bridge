@@ -1,5 +1,5 @@
 name = "eyg_json_bridge"
-version = "0.2.0"
+version = "0.3.0"
 target = "javascript"
 description = "Bounded JSON bridge to upstream EYG evaluation and host-defined effects"
 licences = ["Apache-2.0"]
