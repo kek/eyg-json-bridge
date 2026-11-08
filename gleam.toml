@@ -1,0 +1,14 @@
+name = "eyg_runtime"
+version = "0.1.1"
+target = "javascript"
+description = "Host-neutral checked EYG evaluation and typed effect continuations"
+licences = ["Apache-2.0"]
+repository = { type = "github", user = "kek", repo = "eyg-runtime" }
+
+[dependencies]
+gleam_stdlib = "1.0.5"
+gleam_json = "3.1.0"
+eyg_analysis = "3.0.1"
+eyg_interpreter = "9.0.0"
+eyg_parser = "0.5.2"
+
